@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>NANAME Doors</name>
+  <packageId>oels.nanamedoors</packageId>
+  <author>OELS</author>
+  <description>斜めのドアを追加します。
+  This mod adds a diagonal doors.
+</description>
+  <url></url>
+
+  <supportedVersions>
+    <li>1.4</li>
+    <li>1.5</li>
+  </supportedVersions>
+
+  <modDependencies>
+  </modDependencies>
+  <loadAfter>
+    <li></li>
+  </loadAfter>
+</ModMetaData>
