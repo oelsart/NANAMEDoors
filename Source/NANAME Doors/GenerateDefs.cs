@@ -27,7 +27,7 @@ namespace NanameDoors
                     if (!field.IsLiteral) field.SetValue(newDef, field.GetValue(doorDef));
                 }
                 newDef.defName = newDef.defName + "_Diagonal";
-                newDef.label = "Dia. " + newDef.label;
+                newDef.label = "NAD.Diagonal".Translate() + newDef.label;
                 newDef.thingClass = typeof(Building_DiagonalDoor);
                 newDef.size = new IntVec2(2, 2);
                 newDef.graphicData = new GraphicData();
