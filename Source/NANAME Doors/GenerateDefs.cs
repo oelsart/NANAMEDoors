@@ -40,13 +40,11 @@ namespace NanameDoors
                 {
                     newDef.modExtensions = newDef.modExtensions.AddItem(new FenceGateMoverGraphics("NanameDoors/FenceGateMovers")).ToList();
                     newDef.graphicData.linkFlags = LinkFlags.Fences;
-                    newDef.drawHighlight = false;
                 }
                 else if (doorDef.defName == "VFEArch_AnimalGate")
                 {
                     newDef.modExtensions = newDef.modExtensions.AddItem(new FenceGateMoverGraphics("NanameDoors/AnimalGateMovers")).ToList();
                     newDef.graphicData.linkFlags = LinkFlags.Fences;
-                    newDef.drawHighlight = false;
                 }
                 else
                 {
