@@ -207,6 +207,11 @@ namespace NanameDoors
                         wallDrawPos.x += 0.025f;
                     }
                     linkGrid(this.map.linkGrid)[cellIndices.CellToIndex(wallPos)] = this.def.graphicData.linkFlags;
+                    if (wallPos != this.previousWallPos[i])
+                    {
+                        this.previousWallPos[i] = wallPos;
+                        this.map.mapDrawer.SectionAt(adjacentWall.Position).GetLayer(typeof(SectionLayer_ThingsGeneral)).Regenerate();
+                    }
 
                     if (!actuallyDraw) continue;
                     Material material = MaterialAtlasPool.SubMaterialFromAtlas(graphic.GetColoredVersion(adjacentWall.Graphic.Shader, adjacentWall.DrawColor, Color.white).MatSingleFor(adjacentWall), linkSet);
@@ -255,6 +260,8 @@ namespace NanameDoors
         private Graphic doorSideWallGraphicDiagonalRight;
 
         private float doorSideWallTexScale;
+
+        private IntVec3[] previousWallPos = new IntVec3[2];
 
         private float doorOffsetFactor;
 
