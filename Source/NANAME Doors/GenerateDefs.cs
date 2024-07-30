@@ -58,7 +58,7 @@ namespace NanameDoors
                 bluePrintDef.shortHash = 0;
                 GiveShortHash(bluePrintDef, typeof(ThingDef), takenHashes[typeof(ThingDef)]);
                 DefGenerator.AddImpliedDef(bluePrintDef);
-                var frameDef = NewFrameDef_Thing(newDef, false);
+                var frameDef = NewFrameDef_Thing(newDef);
                 frameDef.shortHash = 0;
                 GiveShortHash(frameDef, typeof(ThingDef), takenHashes[typeof(ThingDef)]);
                 DefGenerator.AddImpliedDef(frameDef);
@@ -75,8 +75,8 @@ namespace NanameDoors
 
         private delegate void GetGiveShortHash(Def def, Type defType, HashSet<ushort> takenHashes);
 
-        private delegate ThingDef GetNewBlueprintDef_Thing(ThingDef def, bool isInstallBlueprint, ThingDef normalBlueprint = null, bool hotReload = false);
+        private delegate ThingDef GetNewBlueprintDef_Thing(ThingDef def, bool isInstallBlueprint, ThingDef normalBlueprint = null);
 
-        private delegate ThingDef GetNewFrameDef_Thing(ThingDef def, bool hodReload = false);
+        private delegate ThingDef GetNewFrameDef_Thing(ThingDef def);
     }
 }
