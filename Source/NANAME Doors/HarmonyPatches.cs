@@ -23,7 +23,7 @@ namespace NanameDoors
     }
 
     //DiagonalDoorの時StuckOpen無効化
-    /*[HarmonyPatch(typeof(Building_Door), "StuckOpen", MethodType.Getter)]
+    [HarmonyPatch(typeof(Building_Door), "StuckOpen", MethodType.Getter)]
     public static class Building_Door_StuckOpen_Patch
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator ILGenerator)
@@ -33,7 +33,7 @@ namespace NanameDoors
             codes[0] = codes[0].WithLabels(label);
             codes.InsertRange(0, new List<CodeInstruction>
             {
-                new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.LoadArgument(0),
                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
                 new CodeInstruction(OpCodes.Brfalse_S, label),
                 new CodeInstruction(OpCodes.Ldc_I4_0),
@@ -41,7 +41,7 @@ namespace NanameDoors
             });
             return codes;
         }
-    }*/
+    }
 
     //DiagonalDoor内での斜め移動許可
     [HarmonyPatch(typeof(PathFinder), "BlocksDiagonalMovement", typeof(int), typeof(PathingContext), typeof(bool))]
@@ -54,7 +54,7 @@ namespace NanameDoors
             var label = (Label)codes[pos + 1].operand;
             codes.InsertRange(pos + 2, new List<CodeInstruction>
             {
-                new CodeInstruction(OpCodes.Ldloc_0),
+                CodeInstruction.LoadLocal(0),
                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
                 new CodeInstruction(OpCodes.Brtrue_S, label),
             });
@@ -71,7 +71,7 @@ namespace NanameDoors
             var codes = instructions.ToList();
             var pos = codes.FindIndex(c => c.opcode == OpCodes.Call && (c.operand as MethodInfo) == AccessTools.Method(typeof(GridsUtility), "GetEdifice")) - 5;
             codes[pos] = CodeInstruction.Call(typeof(IntVec3), "AdjacentToCardinal", new Type[] { typeof(IntVec3) });
-            codes.Insert(pos, new CodeInstruction(OpCodes.Ldarg_1));
+            codes.Insert(pos, CodeInstruction.LoadArgument(1));
             return codes;
         }
     }
@@ -89,27 +89,27 @@ namespace NanameDoors
             codes[pos] = codes[pos].WithLabels(labelFalse);
             codes.InsertRange(pos, new List<CodeInstruction>
             {
-                new CodeInstruction(OpCodes.Ldloc_S, Convert.ToByte(53)),
+                CodeInstruction.LoadLocal(51),
                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
                 new CodeInstruction(OpCodes.Brfalse_S, labelFalse),
-                new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.LoadArgument(0),
                 CodeInstruction.LoadField(typeof(PathFinder), "edificeGrid"),
-                new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.LoadArgument(0),
                 CodeInstruction.LoadField(typeof(PathFinder), "map"),
                 CodeInstruction.LoadField(typeof(Map), "cellIndices"),
-                new CodeInstruction(OpCodes.Ldloc_S, Convert.ToByte(35)),
+                CodeInstruction.LoadLocal(33),
                 new CodeInstruction(OpCodes.Callvirt, AccessTools.Method(typeof(CellIndices), "CellToIndex", new Type[] { typeof(IntVec3) })),
                 new CodeInstruction(OpCodes.Ldelem_Ref),
                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
                 new CodeInstruction(OpCodes.Brfalse_S, labelFalse),
-                new CodeInstruction(OpCodes.Ldloca_S, Convert.ToByte(35)),
-                new CodeInstruction(OpCodes.Ldloc_S, Convert.ToByte(43)),
+                CodeInstruction.LoadLocal(33, true),
+                CodeInstruction.LoadLocal(41),
                 new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Ldloc_S, Convert.ToByte(44)),
+                CodeInstruction.LoadLocal(42),
                 new CodeInstruction(OpCodes.Newobj, AccessTools.Constructor(typeof(IntVec3), new Type[] { typeof(int), typeof(int), typeof(int) })),
                 CodeInstruction.Call(typeof(IntVec3), "AdjacentToCardinal", new Type[] { typeof(IntVec3) }),
                 new CodeInstruction(OpCodes.Brfalse_S, labelFalse),
-                 new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.LoadArgument(0),
                 CodeInstruction.Call(typeof(PathFinder), "PfProfilerEndSample"),
                 new CodeInstruction(OpCodes.Br, labelGoTo)
             });
@@ -123,13 +123,13 @@ namespace NanameDoors
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var codes = instructions.ToList();
-            var pos = codes.FindIndex(c => c.opcode == OpCodes.Callvirt && (c.operand as MethodInfo) == AccessTools.PropertyGetter(typeof(ThingDef), "IsDoor")) + 2;
-            var labelTrue = (Label)codes[pos - 4].operand;
+            var pos = codes.FindIndex(c => c.opcode == OpCodes.Call && (c.operand as MethodInfo) == AccessTools.PropertyGetter(typeof(IntVec2), "One")) + 3;
+            var labelTrue = (Label)codes[pos - 9].operand;
             var labelFalse = (Label)codes[pos - 1].operand;
             codes[pos - 1] = new CodeInstruction(OpCodes.Brtrue_S, labelTrue);
             codes.InsertRange(pos, new List<CodeInstruction>
             {
-                 new CodeInstruction(OpCodes.Ldarg_1),
+                CodeInstruction.LoadArgument(1),
                 CodeInstruction.LoadField(typeof(ThingDef), "thingClass"),
                 new CodeInstruction(OpCodes.Ldtoken, typeof(Building_DiagonalDoor)),
                 CodeInstruction.Call(typeof(Type), "GetTypeFromHandle"),
@@ -137,91 +137,6 @@ namespace NanameDoors
                 new CodeInstruction(OpCodes.Brfalse_S, labelFalse)
             });
             return codes;
-        }
-    }
-
-    [HarmonyPatch(typeof(Building_Door), "WillCloseSoon", MethodType.Getter)]
-    public static class Building_Door_WillCloseSoon_Patch
-    {
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var codes = instructions.ToList();
-            var pos = codes.FindIndex(c => c.opcode == OpCodes.Stloc_0) - 1;
-            var label = generator.DefineLabel();
-            codes[pos] = codes[pos].WithLabels(label);
-            codes.InsertRange(pos, new CodeInstruction[]
-            {
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
-                 new CodeInstruction(OpCodes.Brfalse_S, label),
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 CodeInstruction.Call(typeof(Building_Door_WillCloseSoon_Patch), "WillCloseSoon"),
-                 new CodeInstruction(OpCodes.Ret)
-            });
-            return codes;
-        }
-
-        public static bool WillCloseSoon(Building_Door door)
-        {
-            foreach (IntVec3 intVec in door.OccupiedRect())
-            {
-                for (int i = 0; i < 5; i++)
-                {
-                    IntVec3 c = intVec + GenAdj.CardinalDirectionsAndInside[i];
-                    if (c.InBounds(door.Map))
-                    {
-                        List<Thing> thingList = c.GetThingList(door.Map);
-                        for (int j = 0; j < thingList.Count; j++)
-                        {
-                            Pawn pawn = thingList[j] as Pawn;
-                            if (pawn != null && !pawn.HostileTo(door) && !pawn.Downed && (pawn.Position == intVec || (pawn.pather.Moving && pawn.pather.nextCell == intVec)))
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-    }
-
-    [HarmonyPatch(typeof(Building_Door), "BlockedOpenMomentary", MethodType.Getter)]
-    public static class Building_Door_BlockedOpenMomentary_Patch
-    {
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-        {
-            var codes = instructions.ToList();
-            var pos = 0;
-            var label = generator.DefineLabel();
-            codes[pos] = codes[pos].WithLabels(label);
-            codes.InsertRange(pos, new CodeInstruction[]
-            {
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
-                 new CodeInstruction(OpCodes.Brfalse_S, label),
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 CodeInstruction.Call(typeof(Building_Door_BlockedOpenMomentary_Patch), "BlockedOpenMomentary"),
-                 new CodeInstruction(OpCodes.Ret)
-            });
-            return codes;
-        }
-
-        public static bool BlockedOpenMomentary(Building_Door door)
-        {
-            foreach (IntVec3 c in door.OccupiedRect())
-            {
-                List<Thing> thingList = c.GetThingList(door.Map);
-                for (int i = 0; i < thingList.Count; i++)
-                {
-                    Thing thing = thingList[i];
-                    if (thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Pawn)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
     }
 }
