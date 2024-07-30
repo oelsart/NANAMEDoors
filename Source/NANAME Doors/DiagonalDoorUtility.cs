@@ -13,7 +13,7 @@ namespace NanameDoors
 {
     public static class DiagonalDoorUtility
     {
-        public static Vector3 DoorOffset(IntVec3 loc, Map map, bool preferFences)
+        public static Vector3 DoorOffset(IntVec3 loc, Map map, bool preferFences, Vector3 doorOffset)
         {
             MethodInfo AlignQualityAgainst = AccessTools.Method(typeof(DoorUtility), "AlignQualityAgainst");
             (IntVec3 vec, int value)[] num = new (IntVec3, int)[4];
@@ -30,6 +30,7 @@ namespace NanameDoors
             num[2].value += DiagonalDoorUtility.AlignQualityAgainst(loc, IntVec3.East, map, preferFences);
             num[3].value += DiagonalDoorUtility.AlignQualityAgainst(loc, IntVec3.South, map, preferFences);
             var list = num.ToList();
+            list.SortByDescending(n => n.vec == doorOffset.ToIntVec3());
             list.SortByDescending(n => n.value);
             return list[0].vec.ToVector3();
         }

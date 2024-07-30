@@ -25,6 +25,12 @@ namespace NanameDoors
             this.Init();
         }
 
+        public override void ExposeData()
+        {
+            base.ExposeData();
+            Scribe_Values.Look(ref this.doorOffset, "doorOffset", IntVec3.NorthEast.ToVector3());
+        }
+
         private void Init()
         {
             this.map = this.Map;
@@ -52,11 +58,16 @@ namespace NanameDoors
                 this.doorSideWallTexScale = 1.3667f;
                 this.doorOffsetFactor = 0.25f;
             }
+
+            LongEventHandler.ExecuteWhenFinished(delegate
+            {
+                this.DrawDoorSideWall(this.TrueCenter());
+            });
         }
 
         protected override void DrawAt(Vector3 drawLoc, bool flip = false)
         {
-            this.doorOffset = DiagonalDoorUtility.DoorOffset(base.Position, base.Map, this.def.building.preferConnectingToFences);
+            this.doorOffset = DiagonalDoorUtility.DoorOffset(base.Position, base.Map, this.def.building.preferConnectingToFences, this.doorOffset);
             this.DrawDoorSideWall(drawLoc);
             float offsetDist = 0.45f * this.OpenPct;
             float altitude;
