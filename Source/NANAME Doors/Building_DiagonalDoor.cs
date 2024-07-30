@@ -210,7 +210,14 @@ namespace NanameDoors
                     if (wallPos != this.previousWallPos[i])
                     {
                         this.previousWallPos[i] = wallPos;
-                        this.map.mapDrawer.SectionAt(adjacentWall.Position).GetLayer(typeof(SectionLayer_ThingsGeneral)).Regenerate();
+                        if (this.isFenceGate)
+                        {
+                            this.map.mapDrawer.SectionAt(adjacentWall.Position).GetLayer(typeof(SectionLayer_BridgeProps)).Regenerate();
+                        }
+                        else
+                        {
+                            this.map.mapDrawer.SectionAt(adjacentWall.Position).GetLayer(typeof(SectionLayer_ThingsGeneral)).Regenerate();
+                        }
                     }
 
                     if (!actuallyDraw) continue;
