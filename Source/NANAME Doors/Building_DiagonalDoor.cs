@@ -59,14 +59,16 @@ namespace NanameDoors
                 this.doorOffsetFactor = 0.25f;
             }
 
-
-            this.DrawDoorSideWall(this.TrueCenter(), false);
+            LongEventHandler.ExecuteWhenFinished(delegate
+            {
+                this.DrawDoorSideWall(this.TrueCenter());
+            });
         }
 
         protected override void DrawAt(Vector3 drawLoc, bool flip = false)
         {
             this.doorOffset = DiagonalDoorUtility.DoorOffset(base.Position, base.Map, this.def.building.preferConnectingToFences, this.doorOffset);
-            this.DrawDoorSideWall(drawLoc, true);
+            this.DrawDoorSideWall(drawLoc);
             float offsetDist = 0.45f * this.OpenPct;
             float altitude;
             if (this.isFenceGate && this.doorOffset.z > 0f) altitude = AltitudeLayer.BuildingOnTop.AltitudeFor();
@@ -112,7 +114,7 @@ namespace NanameDoors
             }
         }
 
-        protected void DrawDoorSideWall(Vector3 drawPos, bool actuallyDraw)
+        protected void DrawDoorSideWall(Vector3 drawPos)
         {
             foreach(var c in this.OccupiedRect())
             {
@@ -206,12 +208,9 @@ namespace NanameDoors
                     {
                         wallDrawPos.x += 0.025f;
                     }
-                    linkGrid(this.map.linkGrid)[cellIndices.CellToIndex(wallPos)] = this.def.graphicData.linkFlags;
-
-                    if (!actuallyDraw) continue;
                     Material material = MaterialAtlasPool.SubMaterialFromAtlas(graphic.GetColoredVersion(adjacentWall.Graphic.Shader, adjacentWall.DrawColor, Color.white).MatSingleFor(adjacentWall), linkSet);
                     Graphics.DrawMesh(MeshPool.plane10, Matrix4x4.TRS(wallDrawPos, Quaternion.identity, new Vector3(this.doorSideWallTexScale, 0f, this.doorSideWallTexScale)), material, 0);
-
+                    linkGrid(this.map.linkGrid)[cellIndices.CellToIndex(wallPos)] = this.def.graphicData.linkFlags;
                 }
             }
         }
