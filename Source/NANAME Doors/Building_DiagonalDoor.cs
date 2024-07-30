@@ -59,24 +59,22 @@ namespace NanameDoors
                 this.doorOffsetFactor = 0.25f;
             }
 
-            LongEventHandler.ExecuteWhenFinished(delegate
-            {
-                this.DrawDoorSideWall(this.TrueCenter());
-            });
+            this.DrawDoorSideWall(this.DrawPos, false);
         }
 
-        protected override void DrawAt(Vector3 drawLoc, bool flip = false)
+        public override void Draw()
         {
-            this.doorOffset = DiagonalDoorUtility.DoorOffset(base.Position, base.Map, this.def.building.preferConnectingToFences, this.doorOffset);
-            this.DrawDoorSideWall(drawLoc);
-            float offsetDist = 0.45f * this.OpenPct;
+            var drawLoc = this.DrawPos;
+            this.doorOffset = DiagonalDoorUtility.DoorOffset(base.Position, base.Map, this.doorOffset);
+            this.DrawDoorSideWall(drawLoc, true);
+            float offsetDist = 0.45f * Mathf.Clamp01((float)this.ticksSinceOpen / (float)this.TicksToOpenNow);
             float altitude;
             if (this.isFenceGate && this.doorOffset.z > 0f) altitude = AltitudeLayer.BuildingOnTop.AltitudeFor();
             else altitude = AltitudeLayer.DoorMoveable.AltitudeFor();
             this.DrawMovers(drawLoc, offsetDist, this.Graphic, altitude, new Vector3(this.isFenceGate ? 2f : 1.42f, 1f, this.isFenceGate ? 2f : 0.9f), this.Graphic.ShadowGraphic);
         }
 
-        new protected void DrawMovers(Vector3 drawPos, float offsetDist, Graphic graphic, float altitude, Vector3 drawScaleFactor, Graphic_Shadow shadowGraphic)
+        protected void DrawMovers(Vector3 drawPos, float offsetDist, Graphic graphic, float altitude, Vector3 drawScaleFactor, Graphic_Shadow shadowGraphic)
         {
             for (int i = 0; i < 2; i++)
             {
@@ -114,7 +112,7 @@ namespace NanameDoors
             }
         }
 
-        protected void DrawDoorSideWall(Vector3 drawPos)
+        protected void DrawDoorSideWall(Vector3 drawPos, bool actuallyDraw)
         {
             foreach(var c in this.OccupiedRect())
             {
@@ -208,9 +206,42 @@ namespace NanameDoors
                     {
                         wallDrawPos.x += 0.025f;
                     }
+                    linkGrid(this.map.linkGrid)[cellIndices.CellToIndex(wallPos)] = this.def.graphicData.linkFlags;
+
+                    if (!actuallyDraw) continue;
                     Material material = MaterialAtlasPool.SubMaterialFromAtlas(graphic.GetColoredVersion(adjacentWall.Graphic.Shader, adjacentWall.DrawColor, Color.white).MatSingleFor(adjacentWall), linkSet);
                     Graphics.DrawMesh(MeshPool.plane10, Matrix4x4.TRS(wallDrawPos, Quaternion.identity, new Vector3(this.doorSideWallTexScale, 0f, this.doorSideWallTexScale)), material, 0);
-                    linkGrid(this.map.linkGrid)[cellIndices.CellToIndex(wallPos)] = this.def.graphicData.linkFlags;
+                }
+            }
+        }
+
+        public override void Tick()
+        {
+            base.Tick();
+            if (this.Open)
+            {
+                foreach (IntVec3 c in this.OccupiedRect().Where(c => c != this.Position))
+                {
+                    List<Thing> thingList = c.GetThingList(base.Map);
+                    for (int i = 0; i < thingList.Count; i++)
+                    {
+                        Pawn p;
+                        if ((p = (thingList[i] as Pawn)) != null)
+                        {
+                            this.CheckFriendlyTouched(p);
+                        }
+                    }
+                }
+            }
+            if (this.ticksUntilClose > 0)
+            {
+                foreach (IntVec3 c2 in this.OccupiedRect().Where(c => c != this.Position))
+                {
+                    if (base.Map.thingGrid.CellContains(c2, ThingCategory.Pawn))
+                    {
+                        this.ticksUntilClose = 110;
+                        break;
+                    }
                 }
             }
         }
