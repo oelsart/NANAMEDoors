@@ -220,7 +220,7 @@ namespace NanameDoors
             }
         }
 
-        public override void Tick()
+        /*public override void Tick()
         {
             base.Tick();
             if (this.Open)
@@ -249,7 +249,7 @@ namespace NanameDoors
                     }
                 }
             }
-        }
+        }*/
 
         private Vector3 doorOffset;
 

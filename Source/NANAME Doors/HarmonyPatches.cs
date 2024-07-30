@@ -129,7 +129,7 @@ namespace NanameDoors
             codes[pos - 1] = new CodeInstruction(OpCodes.Brtrue_S, labelTrue);
             codes.InsertRange(pos, new List<CodeInstruction>
             {
-                 new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Ldarg_1),
                 CodeInstruction.LoadField(typeof(ThingDef), "thingClass"),
                 new CodeInstruction(OpCodes.Ldtoken, typeof(Building_DiagonalDoor)),
                 CodeInstruction.Call(typeof(Type), "GetTypeFromHandle"),
@@ -141,7 +141,7 @@ namespace NanameDoors
     }
 
     [HarmonyPatch(typeof(Building_Door), "WillCloseSoon", MethodType.Getter)]
-    public static class Building_Door_WillCloseSoon_Patch
+    public static class Patch_Building_Door_WillCloseSoon
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -151,12 +151,12 @@ namespace NanameDoors
             codes[pos] = codes[pos].WithLabels(label);
             codes.InsertRange(pos, new CodeInstruction[]
             {
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
-                 new CodeInstruction(OpCodes.Brfalse_S, label),
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 CodeInstruction.Call(typeof(Building_Door_WillCloseSoon_Patch), "WillCloseSoon"),
-                 new CodeInstruction(OpCodes.Ret)
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
+                new CodeInstruction(OpCodes.Brfalse_S, label),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.Call(typeof(Patch_Building_Door_WillCloseSoon), "WillCloseSoon"),
+                new CodeInstruction(OpCodes.Ret)
             });
             return codes;
         }
@@ -187,7 +187,7 @@ namespace NanameDoors
     }
 
     [HarmonyPatch(typeof(Building_Door), "BlockedOpenMomentary", MethodType.Getter)]
-    public static class Building_Door_BlockedOpenMomentary_Patch
+    public static class Patch_Building_Door_BlockedOpenMomentary
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
         {
@@ -197,12 +197,12 @@ namespace NanameDoors
             codes[pos] = codes[pos].WithLabels(label);
             codes.InsertRange(pos, new CodeInstruction[]
             {
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
-                 new CodeInstruction(OpCodes.Brfalse_S, label),
-                 new CodeInstruction(OpCodes.Ldarg_0),
-                 CodeInstruction.Call(typeof(Building_Door_BlockedOpenMomentary_Patch), "BlockedOpenMomentary"),
-                 new CodeInstruction(OpCodes.Ret)
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
+                new CodeInstruction(OpCodes.Brfalse_S, label),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.Call(typeof(Patch_Building_Door_BlockedOpenMomentary), "BlockedOpenMomentary"),
+                new CodeInstruction(OpCodes.Ret)
             });
             return codes;
         }
@@ -222,6 +222,65 @@ namespace NanameDoors
                 }
             }
             return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(Region), "Allows")]
+    public static class Patch_Region_Allows
+    {
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = instructions.ToList();
+            var pos = codes.FindIndex(c => c.opcode == OpCodes.Ldloc_S && (c.operand as LocalBuilder).LocalIndex == 4);
+            var pos2 = codes.FindIndex(c => codes.IndexOf(c) > pos && c.opcode == OpCodes.Bne_Un_S);
+            var label = codes[pos + 1].operand;
+            codes.RemoveRange(pos, pos2 - pos + 1);
+            codes.InsertRange(pos, new CodeInstruction[]
+            {
+                new CodeInstruction(OpCodes.Ldloc_S, Convert.ToByte(4)),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                CodeInstruction.Call(typeof(Patch_Region_Allows), "Allows"),
+                new CodeInstruction(OpCodes.Brtrue_S, label)
+            });
+            return codes;
+        }
+
+        public static bool Allows(ByteGrid avoidGrid, Region region)
+        {
+            if (avoidGrid != null)
+            {
+                foreach (IntVec3 intVec in region.door.OccupiedRect())
+                {
+                    if (avoidGrid[intVec] == 255 && intVec.GetRegion(region.Map, RegionType.Set_Passable) == region)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(RegionDirtyer), "Notify_ThingAffectingRegionsDespawned")]
+    public static class Patch_RegionDirtyer_Notify_ThingAffectingRegionsDespawned
+    {
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var codes = instructions.ToList();
+            var label = generator.DefineLabel();
+            codes[0] = codes[0].WithLabels(label);
+
+            codes.InsertRange(0, new CodeInstruction[]
+            {
+                new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
+                new CodeInstruction(OpCodes.Brfalse_S, label),
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                CodeInstruction.Call(typeof(RegionDirtyer), "Notify_ThingAffectingRegionsSpawned"),
+                new CodeInstruction(OpCodes.Ret)
+            });
+            return codes;
         }
     }
 }
