@@ -60,7 +60,7 @@ namespace NanameDoors
             }
 
 
-            this.DrawDoorSideWall(this.TrueCenter(), false);
+            this.DrawDoorSideWall(this.DrawPos, false);
         }
 
         protected override void DrawAt(Vector3 drawLoc, bool flip = false)
@@ -130,7 +130,7 @@ namespace NanameDoors
                     wallDrawPos = new Vector3(drawPos.x + doorOffset.x * 0.5f, 0f, drawPos.z - doorOffset.z * 0.5f);
                 }
                 Vector3 wallOffset = wallDrawPos - drawPos;
-                IntVec3 wallPos = new IntVec3((int)(wallDrawPos.x - 0.5f), 0, (int)(wallDrawPos.z - 0.5f));
+                IntVec3 wallPos = IntVec3.FromVector3(wallDrawPos);
                 int num = 0;
                 int num2 = 1;
                 Thing adjacentWall = null;
@@ -207,6 +207,8 @@ namespace NanameDoors
                         wallDrawPos.x += 0.025f;
                     }
                     linkGrid(this.map.linkGrid)[cellIndices.CellToIndex(wallPos)] = this.def.graphicData.linkFlags;
+                    if (!actuallyDraw) continue;
+
                     if (wallPos != this.previousWallPos[i])
                     {
                         this.previousWallPos[i] = wallPos;
@@ -220,10 +222,8 @@ namespace NanameDoors
                         }
                     }
 
-                    if (!actuallyDraw) continue;
                     Material material = MaterialAtlasPool.SubMaterialFromAtlas(graphic.GetColoredVersion(adjacentWall.Graphic.Shader, adjacentWall.DrawColor, Color.white).MatSingleFor(adjacentWall), linkSet);
                     Graphics.DrawMesh(MeshPool.plane10, Matrix4x4.TRS(wallDrawPos, Quaternion.identity, new Vector3(this.doorSideWallTexScale, 0f, this.doorSideWallTexScale)), material, 0);
-
                 }
             }
         }
