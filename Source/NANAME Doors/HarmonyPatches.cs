@@ -3,12 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Verse;
 using RimWorld;
 using System.Reflection.Emit;
 using Verse.AI;
+using UnityEngine;
 
 namespace NanameDoors
 {
@@ -22,30 +21,9 @@ namespace NanameDoors
         }
     }
 
-    //DiagonalDoorの時StuckOpen無効化
-    /*[HarmonyPatch(typeof(Building_Door), "StuckOpen", MethodType.Getter)]
-    public static class Building_Door_StuckOpen_Patch
-    {
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator ILGenerator)
-        {
-            var codes = instructions.ToList();
-            var label = ILGenerator.DefineLabel();
-            codes[0] = codes[0].WithLabels(label);
-            codes.InsertRange(0, new List<CodeInstruction>
-            {
-                new CodeInstruction(OpCodes.Ldarg_0),
-                new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
-                new CodeInstruction(OpCodes.Brfalse_S, label),
-                new CodeInstruction(OpCodes.Ldc_I4_0),
-                new CodeInstruction(OpCodes.Ret)
-            });
-            return codes;
-        }
-    }*/
-
     //DiagonalDoor内での斜め移動許可
     [HarmonyPatch(typeof(PathFinder), "BlocksDiagonalMovement", typeof(int), typeof(PathingContext), typeof(bool))]
-    public static class PathFinder_BlocksDiagonalMovement_Patch
+    public static class Patch_PathFinder_BlocksDiagonalMovement
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -64,7 +42,7 @@ namespace NanameDoors
 
     //DoorからDoorへ移動する時コストが加算されるが、斜め移動の場合それを無視
     [HarmonyPatch(typeof(PathGrid), "CalculatedCostAt")]
-    public static class PathGrid_CalculatedCostAt_Patch
+    public static class Patch_PathGrid_CalculatedCostAt
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -78,7 +56,7 @@ namespace NanameDoors
 
     //DiagonalDoor内では斜め移動のみを許可する
     [HarmonyPatch(typeof(PathFinder), "FindPath", typeof(IntVec3), typeof(LocalTargetInfo), typeof(TraverseParms), typeof(PathEndMode), typeof(PathFinderCostTuning))]
-    public static class PathFinder_FindPath_Patch
+    public static class Patch_PathFinder_FindPath
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator ILGenerator)
         {
@@ -118,7 +96,7 @@ namespace NanameDoors
     }
 
     [HarmonyPatch(typeof(GhostUtility), "GhostGraphicFor")]
-    public static class GhostUtility_GhostGraphicFor_Patch
+    public static class Patch_GhostUtility_GhostGraphicFor
     {
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
@@ -279,6 +257,38 @@ namespace NanameDoors
                 new CodeInstruction(OpCodes.Ldarg_1),
                 CodeInstruction.Call(typeof(RegionDirtyer), "Notify_ThingAffectingRegionsSpawned"),
                 new CodeInstruction(OpCodes.Ret)
+            });
+            return codes;
+        }
+    }
+
+    [HarmonyPatch(typeof(Pawn_PathFollower), "NextCellDoorToWaitForOrManuallyOpen")]
+    public static class Patch_Pawn_PathFollower_NextCellDoorToWaitForOrManuallyOpen
+    {
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+        {
+            var codes = instructions.ToList();
+            var pos = codes.FindLastIndex(c => c.opcode == OpCodes.Ldloc_0);
+            var labelLdloc = generator.DefineLabel();
+            var labelLdnull = codes[pos - 1].operand;
+            codes[pos] = codes[pos].WithLabels(labelLdloc);
+            codes.InsertRange(pos, new CodeInstruction[]
+            {
+            new CodeInstruction(OpCodes.Ldloc_0),
+            new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
+            new CodeInstruction(OpCodes.Brfalse_S, labelLdloc),
+            new CodeInstruction(OpCodes.Ldloc_0),
+            CodeInstruction.Call(typeof(Building_DiagonalDoor), "get_DrawPos"),
+            new CodeInstruction(OpCodes.Ldloc_0),
+            CodeInstruction.LoadField(typeof(Building_DiagonalDoor), "doorOffset"),
+            new CodeInstruction(OpCodes.Ldc_R4, 0.5f),
+            CodeInstruction.Call(typeof(Vector3), "op_Multiply", new Type[] { typeof(Vector3), typeof(float) }),
+            CodeInstruction.Call(typeof(Vector3), "op_Subtraction"),
+            CodeInstruction.Call(typeof(IntVec3), "FromVector3", new Type[] { typeof(Vector3) }),
+            new CodeInstruction(OpCodes.Ldarg_0),
+            CodeInstruction.LoadField(typeof(Pawn_PathFollower), "nextCell"),
+            CodeInstruction.Call(typeof(IntVec3), "op_Equality"),
+            new CodeInstruction(OpCodes.Brtrue_S, labelLdnull),
             });
             return codes;
         }
