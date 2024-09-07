@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 using Verse;
 
 namespace NanameDoors
@@ -18,7 +17,7 @@ namespace NanameDoors
             var NewBlueprintDef_Thing = AccessTools.MethodDelegate<GetNewBlueprintDef_Thing>(AccessTools.Method(typeof(ThingDefGenerator_Buildings), "NewBlueprintDef_Thing"));
             var NewFrameDef_Thing = AccessTools.MethodDelegate<GetNewFrameDef_Thing>(AccessTools.Method(typeof(ThingDefGenerator_Buildings), "NewFrameDef_Thing"));
             var takenHashes = AccessTools.StaticFieldRefAccess<Dictionary<Type, HashSet<ushort>>>(typeof(ShortHashGiver), "takenHashesPerDeftype");
-            var diagonalWallsActive = ModLister.HasActiveModWithName("Diagonal Walls 2");
+            var diagonalWallsActive = ModsConfig.IsActive("chv.DiagonalWalls2");
             foreach (var doorDef in DefDatabase<ThingDef>.AllDefs.Where(d => d.thingClass == typeof(Building_Door)).ToArray())
             {
                 var newDef = new ThingDef();
@@ -54,6 +53,7 @@ namespace NanameDoors
                 GiveShortHash(newDef, typeof(ThingDef), takenHashes[typeof(ThingDef)]);
                 newDef.modContentPack = NanameDoors.content;
                 DefGenerator.AddImpliedDef(newDef);
+                DefDatabase<BuildableDef>.Add(newDef);
                 var bluePrintDef = NewBlueprintDef_Thing(newDef, false);
                 bluePrintDef.shortHash = 0;
                 GiveShortHash(bluePrintDef, typeof(ThingDef), takenHashes[typeof(ThingDef)]);

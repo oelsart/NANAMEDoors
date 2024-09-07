@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using HarmonyLib;
+using RimWorld;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Verse;
-using RimWorld;
-using HarmonyLib;
 
 namespace NanameDoors
 {
