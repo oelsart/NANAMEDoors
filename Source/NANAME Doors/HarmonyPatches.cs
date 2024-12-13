@@ -17,7 +17,12 @@ namespace NanameDoors
         static HarmonyPatches()
         {
             var harmony = new Harmony("com.harmony.rimworld.nanamedoors");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+            harmony.PatchAllUncategorized(Assembly.GetExecutingAssembly());
+
+            if (ModsConfig.IsActive("MalteSchulze.RIMMSqol"))
+            {
+                harmony.PatchCategory(Assembly.GetExecutingAssembly(), "NANAMEDoors.RIMMSqolPatch");
+            }
         }
     }
 
@@ -52,6 +57,27 @@ namespace NanameDoors
             var pos = codes.FindIndex(c => c.opcode == OpCodes.Isinst && (c.operand as Type) == typeof(Building_Door));
             var label = (Label)codes[pos + 1].operand;
             codes.InsertRange(pos + 2, new List<CodeInstruction>
+            {
+                CodeInstruction.LoadLocal(0),
+                new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
+                new CodeInstruction(OpCodes.Brtrue_S, label),
+            });
+            return codes;
+        }
+    }
+
+    //RIMMSqolのA*パスファインディングに対応
+    [HarmonyPatchCategory("NANAMEDoors.RIMMSqolPatch")]
+    [HarmonyPatch("RIMMSqol.pathfinding.AStarOpt", "BlocksDiagonalMovement")]
+    public static class Patch_AStarOpt_BlocksDiagonalMovement
+    {
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = instructions.ToList();
+            var pos = codes.FindIndex(c => c.opcode == OpCodes.Isinst && (c.operand as Type) == typeof(Building_Door));
+            pos = codes.FindIndex(pos, c => c.opcode == OpCodes.Brfalse_S);
+            var label = (Label)codes[pos].operand;
+            codes.InsertRange(pos + 1, new List<CodeInstruction>
             {
                 CodeInstruction.LoadLocal(0),
                 new CodeInstruction(OpCodes.Isinst, typeof(Building_DiagonalDoor)),
@@ -111,6 +137,52 @@ namespace NanameDoors
                 CodeInstruction.LoadArgument(0),
                 CodeInstruction.Call(typeof(PathFinder), "PfProfilerEndSample"),
                 new CodeInstruction(OpCodes.Br, labelGoTo)
+            });
+            return codes;
+        }
+    }
+
+    //RIMMSqolのA*パスファインディングに対応
+    [HarmonyPatchCategory("NANAMEDoors.RIMMSqolPatch")]
+    [HarmonyPatch("RIMMSqol.pathfinding.AStarOpt", "expandNode")]
+    public static class Patch_AStarOpt_expandNode
+    {
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator ILGenerator)
+        {
+            var codes = instructions.ToList();
+            var t_AStarOpt = AccessTools.TypeByName("RIMMSqol.pathfinding.AStarOpt");
+            var t_AStarOpt_Step = AccessTools.Inner(t_AStarOpt, "Step");
+            var f_dontPassWater = AccessTools.Field(t_AStarOpt, "dontPassWater");
+            var pos = codes.FindIndex(c => c.opcode == OpCodes.Ldfld && c.OperandIs(f_dontPassWater)) - 1;
+            var pos2 = codes.FindLastIndex(pos, c => c.opcode == OpCodes.Br_S);
+            var label = codes[pos2].operand;
+            var label2 = ILGenerator.DefineLabel();
+
+            codes[pos].labels.Add(label2);
+            codes.InsertRange(pos, new[]
+            {
+                CodeInstruction.LoadArgument(1),
+                CodeInstruction.LoadField(t_AStarOpt_Step, "current"),
+                CodeInstruction.LoadArgument(0),
+                CodeInstruction.LoadField(t_AStarOpt, "map"),
+                CodeInstruction.Call(typeof(DiagonalDoorUtility), nameof(DiagonalDoorUtility.GetDiagonalDoor)),
+                new CodeInstruction(OpCodes.Brfalse_S, label2),
+                CodeInstruction.LoadLocal(18),
+                CodeInstruction.LoadArgument(0),
+                CodeInstruction.LoadField(t_AStarOpt, "map"),
+                CodeInstruction.Call(typeof(DiagonalDoorUtility), nameof(DiagonalDoorUtility.GetDiagonalDoor)),
+                new CodeInstruction(OpCodes.Brfalse_S, label2),
+                CodeInstruction.LoadArgument(1),
+                CodeInstruction.LoadField(t_AStarOpt_Step, "current", true),
+                CodeInstruction.LoadLocal(18),
+                CodeInstruction.Call(typeof(IntVec3), "AdjacentToCardinal", new Type[] { typeof(IntVec3) }),
+                new CodeInstruction(OpCodes.Brfalse_S, label2),
+                CodeInstruction.LoadArgument(0),
+                CodeInstruction.LoadField(t_AStarOpt, "neighbors"),
+                CodeInstruction.LoadLocal(15),
+                CodeInstruction.LoadLocal(7),
+                new CodeInstruction(OpCodes.Stelem, typeof(IntVec3)),
+                new CodeInstruction(OpCodes.Br_S, label)
             });
             return codes;
         }

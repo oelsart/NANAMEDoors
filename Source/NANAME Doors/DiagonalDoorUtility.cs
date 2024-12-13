@@ -9,6 +9,15 @@ namespace NanameDoors
 {
     public static class DiagonalDoorUtility
     {
+        public static Building_DiagonalDoor GetDiagonalDoor(this IntVec3 c, Map map)
+        {
+            if (c.GetEdifice(map) is Building_DiagonalDoor result)
+            {
+                return result;
+            }
+            return null;
+        }
+
         public static Vector3 DoorOffset(IntVec3 loc, Map map, bool preferFences, Vector3 doorOffset)
         {
             MethodInfo AlignQualityAgainst = AccessTools.Method(typeof(DoorUtility), "AlignQualityAgainst");
