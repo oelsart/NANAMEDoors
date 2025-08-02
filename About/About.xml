@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
   <name>NANAME Doors</name>
-  <packageId>oels.nanamedoorsexperimental</packageId>
+  <packageId>oels.nanamedoors</packageId>
   <author>OELS</author>
   <description>斜めのドアとフェンスゲートを追加します。
 This mod adds some diagonal doors and fence gates.
