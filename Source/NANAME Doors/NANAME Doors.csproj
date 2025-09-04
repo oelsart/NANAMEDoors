@@ -10,30 +10,20 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
     <DebugType>none</DebugType>
-    <OutputPath>E:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\NANAMEDoorsExperimental\1.6\Assemblies\</OutputPath>
+    <OutputPath>E:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\NANAMEDoors\1.6\Assemblies\</OutputPath>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
-    <OutputPath>E:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\NANAMEDoorsExperimental\1.6\Assemblies\</OutputPath>
+    <OutputPath>E:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\NANAMEDoors\1.6\Assemblies\</OutputPath>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4535" />
-    <PackageReference Include="Lib.Harmony" Version="2.3.6">
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4566" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.1">
       <PrivateAssets></PrivateAssets>
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Reference Update="System">

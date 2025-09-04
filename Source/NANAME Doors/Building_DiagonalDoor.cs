@@ -167,7 +167,7 @@ public class Building_DiagonalDoor : Building_Door
                             {
                                 adjacentWall = thing;
                                 num += num2;
-                                if (thing.def.modContentPack.PackageId == DiagonalWalls.PackageId)
+                                if (thing.def.modContentPack?.PackageId == DiagonalWalls.PackageId)
                                 {
                                     if (j == 0 && (adjacentWallPos + IntVec3.East).GetThingList(Map).Any(t => t.def.graphicData?.linkFlags.HasFlag(LinkFlags.Fences) ?? false))
                                     {
@@ -187,7 +187,7 @@ public class Building_DiagonalDoor : Building_Door
                             {
                                 adjacentWall = thing;
                                 num += num2;
-                                if (thing.def.modContentPack.PackageId == DiagonalWalls.PackageId)
+                                if (thing.def.modContentPack?.PackageId == DiagonalWalls.PackageId)
                                 {
                                     if (j % 2 == 0 && (adjacentWallPos + IntVec3.East).GetThingList(Map).Any(t => t.def.graphicData?.linkFlags.HasFlag(LinkFlags.Wall) ?? false))
                                     {
@@ -237,7 +237,7 @@ public class Building_DiagonalDoor : Building_Door
                 }
                 if (layer is null) continue;
 
-                Material material = MaterialAtlasPool.SubMaterialFromAtlas(graphic.GetColoredVersion(adjacentWall.Graphic.Shader, adjacentWall.DrawColor, Color.white).MatSingleFor(adjacentWall), linkSet);
+                Material material = MaterialAtlasPool.SubMaterialFromAtlas(graphic.GetColoredVersion(adjacentWall.Graphic?.Shader ?? graphic.Shader, adjacentWall.DrawColor, Color.white).MatSingleFor(adjacentWall), linkSet);
                 Printer_Plane.PrintPlane(layer, wallDrawPos, new Vector2(doorSideWallTexScale, doorSideWallTexScale), material, 0f, false, null, null, 0.01f, 0f);
             }
         }
