@@ -2,7 +2,6 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using Verse;
 using static NanameDoors.ModCompat;
@@ -59,7 +58,7 @@ public static class GenerateDefs
             bluePrintDef.shortHash = 0;
             GiveShortHash(bluePrintDef, typeof(ThingDef), takenHashes[typeof(ThingDef)]);
             DefGenerator.AddImpliedDef(bluePrintDef);
-            var frameDef = NewFrameDef_Thing(newDef, false);
+            var frameDef = NewFrameDef_Thing(newDef);
             frameDef.shortHash = 0;
             GiveShortHash(frameDef, typeof(ThingDef), takenHashes[typeof(ThingDef)]);
             DefGenerator.AddImpliedDef(frameDef);

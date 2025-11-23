@@ -11,7 +11,7 @@ using Verse.AI;
 namespace NanameDoors;
 
 [StaticConstructorOnStartup]
-class HarmonyPatches
+internal class HarmonyPatches
 {
     static HarmonyPatches()
     {
@@ -79,11 +79,7 @@ public static class Patch_BuildingSource_SetBuildingData
 {
     public static bool Prefix(int index, Map ___map)
     {
-        if (___map.edificeGrid[index] is Building_DiagonalDoor)
-        {
-            return false;
-        }
-        return true;
+        return ___map.edificeGrid[index] is not Building_DiagonalDoor;
     }
 }
 
