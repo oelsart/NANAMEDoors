@@ -9,15 +9,10 @@ public static class ModCompat
         public static readonly string PackageId = "chv.DiagonalWalls2".ToLower();
 
         public static readonly bool Active = ModsConfig.IsActive(PackageId);
-
-        public static readonly DesignationCategoryDef DesignationCategoryDef;
-
-        static DiagonalWalls()
-        {
-            if (Active)
-            {
-                DesignationCategoryDef = DefDatabase<DesignationCategoryDef>.GetNamed("chv_Diagonal");
-            }
-        }
+    }
+    
+    public static class MaterialSubMenu
+    {
+        public static readonly bool Active = ModsConfig.IsActive("cedaro.material.submenu") || ModsConfig.IsActive("WSP.GroupedBuildings");
     }
 }

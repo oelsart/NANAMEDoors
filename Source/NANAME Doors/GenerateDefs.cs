@@ -17,6 +17,7 @@ public static class GenerateDefs
         var NewBlueprintDef_Thing = AccessTools.MethodDelegate<GetNewBlueprintDef_Thing>(AccessTools.Method(typeof(ThingDefGenerator_Buildings), "NewBlueprintDef_Thing"));
         var NewFrameDef_Thing = AccessTools.MethodDelegate<GetNewFrameDef_Thing>(AccessTools.Method(typeof(ThingDefGenerator_Buildings), "NewFrameDef_Thing"));
         var takenHashes = AccessTools.StaticFieldRefAccess<Dictionary<Type, HashSet<ushort>>>(typeof(ShortHashGiver), "takenHashesPerDeftype");
+        var designationCategories = new List<DesignationCategoryDef>();
         foreach (var doorDef in DefDatabase<ThingDef>.AllDefs.Where(d => d.thingClass == typeof(Building_Door)).ToArray())
         {
             var newDef = new ThingDef();
@@ -30,23 +31,19 @@ public static class GenerateDefs
             newDef.size = new IntVec2(2, 2);
             newDef.graphicData = new GraphicData();
             newDef.graphicData.CopyFrom(doorDef.graphicData);
-            if (DiagonalWalls.Active)
+            switch (doorDef.defName)
             {
-                newDef.designationCategory = DiagonalWalls.DesignationCategoryDef;
-            }
-            if (doorDef.defName == "FenceGate")
-            {
-                newDef.modExtensions = [.. newDef.modExtensions.AddItem(new FenceGateMoverGraphics("NanameDoors/FenceGateMovers"))];
-                newDef.graphicData.linkFlags = LinkFlags.Fences;
-            }
-            else if (doorDef.defName == "VFEArch_AnimalGate")
-            {
-                newDef.modExtensions = [.. newDef.modExtensions.AddItem(new FenceGateMoverGraphics("NanameDoors/AnimalGateMovers"))];
-                newDef.graphicData.linkFlags = LinkFlags.Fences;
-            }
-            else
-            {
-                newDef.graphicData.linkFlags = LinkFlags.Wall | LinkFlags.Rock;
+                case "FenceGate":
+                    newDef.modExtensions = [.. newDef.modExtensions.AddItem(new FenceGateMoverGraphics("NanameDoors/FenceGateMovers"))];
+                    newDef.graphicData.linkFlags = LinkFlags.Fences;
+                    break;
+                case "VFEArch_AnimalGate":
+                    newDef.modExtensions = [.. newDef.modExtensions.AddItem(new FenceGateMoverGraphics("NanameDoors/AnimalGateMovers"))];
+                    newDef.graphicData.linkFlags = LinkFlags.Fences;
+                    break;
+                default:
+                    newDef.graphicData.linkFlags = LinkFlags.Wall | LinkFlags.Rock;
+                    break;
             }
             newDef.drawerType = DrawerType.MapMeshAndRealTime;
             newDef.shortHash = 0;
@@ -62,14 +59,30 @@ public static class GenerateDefs
             frameDef.shortHash = 0;
             GiveShortHash(frameDef, typeof(ThingDef), takenHashes[typeof(ThingDef)]);
             DefGenerator.AddImpliedDef(frameDef);
+
+            if (doorDef.BuildableByPlayer)
+            {
+                designationCategories.Add(doorDef.designationCategory);
+                if (doorDef.designatorDropdown is null)
+                {
+                    var dropdown = new DesignatorDropdownGroupDef
+                    {
+                        defName = doorDef.defName
+                    };
+                    doorDef.designatorDropdown = dropdown;
+                    newDef.designatorDropdown = dropdown;
+                }
+                else if (MaterialSubMenu.Active)
+                {
+                    newDef.designatorDropdown = doorDef.designatorDropdown;
+                }
+            }
+            NanameDoors.Mod.nanameDoors[doorDef] = newDef;
         }
-        if (DiagonalWalls.Active)
+        
+        foreach (var designationCategory in designationCategories)
         {
-            DiagonalWalls.DesignationCategoryDef.ResolveReferences();
-        }
-        else
-        {
-            DefDatabase<DesignationCategoryDef>.GetNamed("Structure").ResolveReferences();
+            designationCategory.ResolveReferences();
         }
     }
 

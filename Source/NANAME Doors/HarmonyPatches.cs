@@ -7,6 +7,7 @@ using System.Reflection.Emit;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using Verse.Sound;
 
 namespace NanameDoors;
 
@@ -112,5 +113,76 @@ public static class Patch_Pawn_PathFollower_NextCellDoorToWaitForOrManuallyOpen
         new CodeInstruction(OpCodes.Brtrue_S, labelLdnull),
         ]);
         return codes;
+    }
+}
+
+[HarmonyPatch(typeof(Designator_Dropdown), "SetupFloatMenu")]
+public static class Patch_Designator_Dropdown_SetupFloatMenu
+{
+    private static readonly AccessTools.FieldRef<Designator_Build, ThingDef> stuffDef = AccessTools.FieldRefAccess<Designator_Build, ThingDef>("stuffDef");
+
+    private static readonly AccessTools.FieldRef<Designator_Build, bool> writeStuff = AccessTools.FieldRefAccess<Designator_Build, bool>("writeStuff");
+
+    private static readonly AccessTools.FieldRef<Designator_Dropdown, bool> activeDesignatorSet = AccessTools.FieldRefAccess<Designator_Dropdown, bool>("activeDesignatorSet");
+
+    private static bool Prepare()
+    {
+        return !ModCompat.MaterialSubMenu.Active;
+    }
+
+    public static bool Prefix(Designator_Dropdown __instance, List<Designator> ___elements, ref Window __result)
+    {
+        List<FloatMenuOption> list = null;
+        Designator_Build designator = null;
+        var flag = false;
+        for (var i = 0; i < 2; i++)
+        {
+            if (___elements.ElementAtOrDefault(i) is not Designator_Build designator_Build) continue;
+            if (designator_Build.PlacingDef is not ThingDef { MadeFromStuff: true } thingDef) continue;
+
+            if (!NanameDoors.Mod.nanameDoors.ContainsKey(thingDef) &&
+                !NanameDoors.Mod.nanameDoors.ContainsValue(thingDef)) continue;
+            flag = true;
+            list ??= [];
+            designator ??= designator_Build;
+            foreach (var item in from d in designator_Build.Map.resourceCounter.AllCountedAmounts.Keys
+                     orderby d.stuffProps?.commonality ?? float.PositiveInfinity descending, d.BaseMarketValue
+                     select d)
+            {
+                if (!item.IsStuff || !item.stuffProps.CanMake(thingDef) || (!DebugSettings.godMode &&
+                                                                            designator_Build.Map.listerThings
+                                                                                .ThingsOfDef(item).Count <= 0)) continue;
+                var localStuffDef = item;
+                var str = designator_Build.sourcePrecept == null ? GenLabel.ThingLabel(thingDef, localStuffDef) : ((string)"ThingMadeOfStuffLabel".Translate(localStuffDef.LabelAsStuff, designator_Build.sourcePrecept.Label));
+                str = str.CapitalizeFirst();
+                FloatMenuOption floatMenuOption = new(str, () =>
+                {
+                    if (TutorSystem.TutorialMode && !TutorSystem.AllowAction(designator_Build.TutorTagSelect))
+                    {
+                        return;
+                    }
+                    designator_Build.CurActivateSound?.PlayOneShotOnCamera();
+                    Find.DesignatorManager.Select(designator_Build);
+                    stuffDef(designator_Build) = localStuffDef;
+                    writeStuff(designator_Build) = true;
+                    __instance.SetActiveDesignator(designator_Build);
+                }, item)
+                {
+                    tutorTag = "SelectStuff-" + thingDef.defName + "-" + localStuffDef.defName
+                };
+                list.Add(floatMenuOption);
+            }
+        }
+
+        if (!flag) return true;
+        __result = new FloatMenu(list)
+        {
+            onCloseCallback = () =>
+            {
+                activeDesignatorSet(__instance) = true;
+                writeStuff(designator) = true;
+            }
+        };
+        return false;
     }
 }
