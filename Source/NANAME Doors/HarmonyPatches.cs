@@ -62,9 +62,9 @@ public static class Patch_PathGrid_CalculatedCostAt
     {
         if (c.GetEdifice(___map) is Building_DiagonalDoor diagonalDoor)
         {
-            if (diagonalDoor.wallPos.Contains(c))
+            if (diagonalDoor.wallPos.Contains(c) && __result < PathGrid.ImpassableCost - 100)
             {
-                __result = PathGrid.ImpassableCost - 1;
+                __result += 100;
                 return;
             }
             if (prevCell.IsValid && prevCell.GetEdifice(___map) == diagonalDoor)
